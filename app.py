@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import tensorflow as tf
 import numpy as np
@@ -15,21 +16,25 @@ pilihan_model = st.sidebar.selectbox(
     ("DenseNet121", "ResNet50", "MobileNetV2")
 )
 
-# 3. Fungsi Memuat Model (Dengan Pembersih Memori)
-@st.cache_resource(max_entries=1) # max_entries=1 memaksa Streamlit hanya mengingat 1 model saja di RAM
+# 3. Fungsi Memuat Model (Dengan GPS / Alamat Lengkap)
+@st.cache_resource(max_entries=1)
 def load_model(nama_model):
+    # KUNCI JAWABAN: Mendeteksi lokasi absolut folder tempat app.py ini berada
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
     if nama_model == "DenseNet121":
-        return tf.keras.models.load_model('densenet121_model.keras')
+        model_path = os.path.join(BASE_DIR, 'densenet121_model.keras')
     elif nama_model == "ResNet50":
-        return tf.keras.models.load_model('resnet50_model.keras')
+        model_path = os.path.join(BASE_DIR, 'resnet50_model.keras')
     else:
-        return tf.keras.models.load_model('mobilenetv2_model.keras')
+        model_path = os.path.join(BASE_DIR, 'mobilenetv2_model.keras')
+        
+    return tf.keras.models.load_model(model_path)
 
 try:
     model = load_model(pilihan_model)
     st.sidebar.success(f"Model {pilihan_model} siap digunakan!")
 except Exception as e:
-    # PERHATIKAN BARIS INI: Ini akan membocorkan alasan asli kenapa dia error
     st.sidebar.error(f"Terdapat Masalah: {e}")
     st.stop()
 
@@ -44,7 +49,7 @@ if uploaded_file is not None:
     st.image(image, caption='Gambar yang diunggah', use_column_width=True)
     st.write(f"Sedang menganalisis dengan **{pilihan_model}**...")
     
-    # 6. Prapemrosesan (Aman dari buta warna)
+    # 6. Prapemrosesan Gambar
     if image.mode != "RGB":
         image = image.convert("RGB")
         
