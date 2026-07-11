@@ -38,7 +38,9 @@ if uploaded_file is not None:
     img_resized = image.resize((224, 224))
     img_array = np.array(img_resized)
     img_array = np.expand_dims(img_array, axis=0)
-    img_array = tf.keras.applications.densenet.preprocess_input(img_array)
+    
+    # INI YANG DIUBAH: Menyamakan format gambar dengan format di Google Colab
+    img_array = img_array / 255.0
     
     # 7. Memprediksi Gambar
     predictions = model.predict(img_array)
