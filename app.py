@@ -29,7 +29,8 @@ try:
     model = load_model(pilihan_model)
     st.sidebar.success(f"Model {pilihan_model} berhasil dimuat!")
 except Exception as e:
-    st.sidebar.error(f"Gagal memuat model {pilihan_model}. Pastikan file .keras ada di dalam folder!")
+    # Ini akan memunculkan tulisan error asli dari mesin Streamlit
+    st.sidebar.error(f"Error aslinya adalah: {e}")
 
 # 4. Daftar Kelas Batuan
 class_names = ['Basalt', 'Coal', 'Granite', 'Limestone', 'Marble', 'Quartzite', 'Sandstone']
