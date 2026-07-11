@@ -6,32 +6,44 @@ from PIL import Image
 # 1. Tampilan Halaman Web
 st.set_page_config(page_title="Klasifikasi Batuan", page_icon="🪨")
 st.title("Aplikasi Identifikasi Jenis Batuan Geologi 🪨")
-st.write("Aplikasi ini dibuat untuk memenuhi tugas akhir/skripsi. Model yang digunakan adalah DenseNet121 yang dilatih untuk mendeteksi 7 jenis batuan: Basalt, Coal, Granite, Limestone, Marble, Quartzite, dan Sandstone.")
+st.write("Aplikasi ini dibuat untuk memenuhi tugas akhir/skripsi. Model yang digunakan dapat dipilih dari menu di samping.")
 
-# 2. Fungsi Memuat Model (Memori Cache agar web tidak lemot)
+# 2. Menu Samping (Sidebar) untuk Pilih Model
+st.sidebar.title("Pengaturan")
+pilihan_model = st.sidebar.selectbox(
+    "Pilih Arsitektur CNN:",
+    ("DenseNet121", "ResNet50", "MobileNetV2")
+)
+
+# 3. Fungsi Memuat Model Berdasarkan Pilihan (Pakai Cache)
 @st.cache_resource
-def load_model():
-    model = tf.keras.models.load_model('densenet121_model.keras')
-    return model
+def load_model(nama_model):
+    if nama_model == "DenseNet121":
+        return tf.keras.models.load_model('densenet121_model.keras')
+    elif nama_model == "ResNet50":
+        return tf.keras.models.load_model('resnet50_model.keras')
+    else:
+        return tf.keras.models.load_model('mobilenetv2_model.keras')
 
 try:
-    model = load_model()
+    model = load_model(pilihan_model)
+    st.sidebar.success(f"Model {pilihan_model} berhasil dimuat!")
 except Exception as e:
-    st.error("Gagal memuat model. Pastikan file densenet121_model.keras ada di folder yang sama!")
+    st.sidebar.error(f"Gagal memuat model {pilihan_model}. Pastikan file .keras ada di dalam folder!")
 
-# 3. Daftar Kelas Batuan
+# 4. Daftar Kelas Batuan
 class_names = ['Basalt', 'Coal', 'Granite', 'Limestone', 'Marble', 'Quartzite', 'Sandstone']
 
-# 4. Tombol Upload Gambar
+# 5. Tombol Upload Gambar
 uploaded_file = st.file_uploader("Pilih gambar batuan (jpg/png)...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # 5. Tampilkan Gambar yang di-upload
+    # 6. Tampilkan Gambar yang di-upload
     image = Image.open(uploaded_file)
     st.image(image, caption='Gambar yang diunggah', use_column_width=True)
-    st.write("Sedang menganalisis...")
+    st.write(f"Sedang menganalisis menggunakan **{pilihan_model}**...")
     
-    # 6. Prapemrosesan Gambar agar sesuai dengan input model
+    # 7. Prapemrosesan Gambar (SUDAH DIPERBAIKI: Menggunakan Rescale 1./255)
     if image.mode != "RGB":
         image = image.convert("RGB")
         
@@ -39,14 +51,14 @@ if uploaded_file is not None:
     img_array = np.array(img_resized)
     img_array = np.expand_dims(img_array, axis=0)
     
-    # INI YANG DIUBAH: Menyamakan format gambar dengan format di Google Colab
-    img_array = img_array / 255.0
+    # Kunci perbaikan agar tebakan tidak nyangkut di Sandstone
+    img_array = img_array / 255.0 
     
-    # 7. Memprediksi Gambar
+    # 8. Memprediksi Gambar
     predictions = model.predict(img_array)
     predicted_class = np.argmax(predictions[0])
     confidence = np.max(predictions[0]) * 100
     
-    # 8. Menampilkan Hasil Akhir
+    # 9. Menampilkan Hasil Akhir
     st.success(f"**Tebakan Model:** {class_names[predicted_class]}")
     st.info(f"**Tingkat Keyakinan:** {confidence:.2f}%")
