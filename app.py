@@ -16,10 +16,9 @@ pilihan_model = st.sidebar.selectbox(
     ("DenseNet121", "ResNet50", "MobileNetV2")
 )
 
-# 3. Fungsi Memuat Model (Dengan GPS / Alamat Lengkap)
+# 3. Fungsi Memuat Model
 @st.cache_resource(max_entries=1)
 def load_model(nama_model):
-    # KUNCI JAWABAN: Mendeteksi lokasi absolut folder tempat app.py ini berada
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     
     if nama_model == "DenseNet121":
@@ -38,7 +37,7 @@ except Exception as e:
     st.sidebar.error(f"Terdapat Masalah: {e}")
     st.stop()
 
-# 4. Daftar Kelas Batuan
+# 4. Daftar Kelas Batuan (Sudah Sesuai Urutan Colab)
 class_names = ['Basalt', 'Coal', 'Granite', 'Limestone', 'Marble', 'Quartzite', 'Sandstone']
 
 # 5. Tombol Upload Gambar
@@ -54,9 +53,16 @@ if uploaded_file is not None:
         image = image.convert("RGB")
         
     img_resized = image.resize((224, 224))
-    img_array = np.array(img_resized)
+    img_array = np.array(img_resized, dtype=np.float32)  # Pastikan tipe data float
     img_array = np.expand_dims(img_array, axis=0)
-    img_array = img_array / 255.0 
+    
+    # KUNCI JAWABAN: Prapemrosesan otomatis mengikuti model yang dipilih (Sama dengan Colab)
+    if pilihan_model == "DenseNet121":
+        img_array = tf.keras.applications.densenet.preprocess_input(img_array)
+    elif pilihan_model == "ResNet50":
+        img_array = tf.keras.applications.resnet50.preprocess_input(img_array)
+    elif pilihan_model == "MobileNetV2":
+        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
     
     # 7. Memprediksi Gambar
     predictions = model.predict(img_array)
